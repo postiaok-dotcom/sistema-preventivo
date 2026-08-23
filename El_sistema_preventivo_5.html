@@ -1,0 +1,1337 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>El sistema preventivo</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800&family=Petrona:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap">
+
+<style>
+  :root{
+    --uc-blue:#004575; --uc-yellow:#FCBC00;
+    --ground:#F3F6FA; --surface:#FFFFFF; --surface-2:#E4EDF4;
+    --ink:#0A2233; --muted:#4F6B80;
+    --hairline:#CBDAE6; --hairline-strong:#A6BFD2;
+    --brand:#004575; --brand-2:#00679E; --on-brand:#FFFFFF;
+    --p1-fill:#00679E; --p1-ink:#004575;
+    --p2-fill:#FCBC00; --p2-ink:#8A6600;
+    --p3-fill:#D9633D; --p3-ink:#A84424;
+    --shadow:0 1px 0 rgba(10,34,51,.04), 0 14px 36px -20px rgba(10,34,51,.34);
+    --sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+    --serif:"Petrona",Georgia,"Times New Roman",serif;
+    --fs-xs:.75rem; --fs-sm:.9rem; --fs-base:1.05rem; --fs-lg:1.2rem;
+    --fs-2xl:2rem; --fs-3xl:2.9rem;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#061A2B; --surface:#0D2639; --surface-2:#123049;
+      --ink:#E5EEF6; --muted:#8FA9BE;
+      --hairline:#1B3B54; --hairline-strong:#2D5673;
+      --brand:#61AEDA; --brand-2:#8CC8EA; --on-brand:#04121F;
+      --p1-fill:#3F9AC9; --p1-ink:#74BFE4;
+      --p2-fill:#FCBC00; --p2-ink:#E7B62F;
+      --p3-fill:#E07A55; --p3-ink:#F09872;
+      --shadow:0 1px 0 rgba(0,0,0,.3), 0 18px 44px -22px rgba(0,0,0,.75);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#061A2B; --surface:#0D2639; --surface-2:#123049;
+    --ink:#E5EEF6; --muted:#8FA9BE;
+    --hairline:#1B3B54; --hairline-strong:#2D5673;
+    --brand:#61AEDA; --brand-2:#8CC8EA; --on-brand:#04121F;
+    --p1-fill:#3F9AC9; --p1-ink:#74BFE4;
+    --p2-fill:#FCBC00; --p2-ink:#E7B62F;
+    --p3-fill:#E07A55; --p3-ink:#F09872;
+    --shadow:0 1px 0 rgba(0,0,0,.3), 0 18px 44px -22px rgba(0,0,0,.75);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+       font-size:var(--fs-base);line-height:1.6;-webkit-font-smoothing:antialiased}
+  ::selection{background:var(--uc-yellow);color:#0A2233}
+
+  /* ---------- Barra superior ---------- */
+  .topbar{
+    position:sticky;top:0;z-index:20;background:var(--surface);
+    border-bottom:1px solid var(--hairline);
+    display:flex;align-items:center;gap:1rem;
+    padding:.6rem clamp(14px,4vw,28px)
+  }
+  .back{
+    display:inline-flex;align-items:center;gap:.5rem;font-family:var(--sans);
+    font-size:var(--fs-sm);font-weight:600;color:var(--ink);background:transparent;
+    border:1px solid var(--hairline-strong);border-radius:2px;padding:.42rem .85rem;cursor:pointer;
+    transition:border-color .18s,color .18s,opacity .18s}
+  .back:hover:not(:disabled){border-color:var(--brand);color:var(--brand)}
+  .back:disabled{opacity:.32;cursor:not-allowed}
+  .back:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .back svg{width:.8em;height:.8em;fill:none;stroke:currentColor;stroke-width:2.4;
+            stroke-linecap:round;stroke-linejoin:round}
+  .prog{display:flex;gap:5px;margin-left:auto;align-items:center}
+  .prog i{width:26px;height:4px;background:var(--hairline);display:block;transition:background .4s}
+  .prog i.on{background:var(--brand)}
+  .prog i.cur{background:var(--uc-yellow)}
+  .prog-lab{font-size:var(--fs-xs);font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+            color:var(--muted);margin-left:.5rem;white-space:nowrap}
+  @media (max-width:560px){ .prog i{width:16px} .prog-lab{display:none} }
+
+  .stage{display:grid;grid-template-columns:170px minmax(0,1fr);gap:clamp(16px,4vw,48px);
+         max-width:1020px;margin:0 auto;padding:clamp(20px,4vw,44px) clamp(16px,5vw,36px) 90px;
+         align-items:start}
+  @media (max-width:900px){ .stage{grid-template-columns:minmax(0,1fr)} .rail{display:none} }
+
+  /* ---------- Ruta ---------- */
+  .rail{position:sticky;top:78px}
+  .rail-svg{width:100%;height:auto;display:block;overflow:visible}
+  .seg{fill:none;stroke:var(--hairline-strong);stroke-width:1.7;stroke-linecap:round;
+       transition:stroke .5s,opacity .5s}
+  .spine{opacity:.45}
+  .spine.done{stroke:var(--brand);opacity:1}
+  .br{opacity:0}
+  .d.open .br{opacity:.34}
+  .d.picked .br{opacity:.12}
+  .d.picked .br.on{opacity:1}
+  .node{fill:var(--ground);stroke:var(--hairline-strong);stroke-width:1.7;opacity:.5;
+        transition:fill .4s,stroke .4s,opacity .4s}
+  .node.done{fill:var(--brand);stroke:var(--brand);opacity:1}
+  .node.now{fill:var(--surface);stroke:var(--uc-yellow);stroke-width:3;opacity:1}
+  .halo{fill:none;stroke:var(--uc-yellow);stroke-width:2;opacity:0}
+  .halo.on{opacity:.9;animation:ping 2.4s ease-out infinite}
+  @keyframes ping{0%{r:7;opacity:.9}70%{r:15;opacity:0}100%{r:15;opacity:0}}
+  .rl{cursor:default}
+  .rl-lab{font-family:var(--sans);font-size:12.5px;font-weight:600;fill:var(--muted);
+          transition:fill .3s}
+  .rl-sub{font-family:var(--sans);font-size:10.5px;font-weight:600;fill:var(--muted);
+          letter-spacing:.05em;transition:fill .3s}
+  .rl.done .rl-lab{fill:var(--ink)}
+  .rl.now .rl-lab{fill:var(--ink);font-weight:700}
+  .rl.now .rl-sub{fill:var(--uc-yellow)}
+  .rl:hover .rl-lab{fill:var(--brand)}
+  .rl:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+  .rail-cap{font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+            text-align:center;margin:12px 0 0}
+  @media (prefers-reduced-motion: reduce){ .halo.on{animation:none;opacity:.7} }
+
+  /* ---------- Tipografía ---------- */
+  main{min-width:0;max-width:44rem}
+  .eyebrow{font-size:var(--fs-xs);font-weight:700;letter-spacing:.17em;text-transform:uppercase;
+           color:var(--brand);margin:0 0 .8rem}
+  h1{font-family:var(--sans);font-weight:800;font-size:var(--fs-3xl);line-height:1.02;
+     margin:0 0 .6rem;letter-spacing:-.028em;text-wrap:balance;color:var(--ink)}
+  h2{font-family:var(--serif);font-weight:600;font-size:var(--fs-2xl);line-height:1.14;
+     margin:0 0 1rem;letter-spacing:-.012em;text-wrap:balance}
+  h3{font-family:var(--sans);font-weight:700;font-size:var(--fs-sm);letter-spacing:.09em;
+     text-transform:uppercase;color:var(--muted);margin:2rem 0 .7rem}
+  .narr{font-family:var(--serif);font-size:1.13rem;line-height:1.68;max-width:62ch}
+  .narr p{margin:0 0 1.05em} .narr p:last-child{margin-bottom:0}
+  .lede{color:var(--muted);font-size:var(--fs-lg);font-family:var(--serif);max-width:56ch;
+        margin:0 0 1.8rem;line-height:1.5}
+  .quiet{color:var(--muted);font-size:var(--fs-sm);max-width:62ch}
+  .voice{font-family:var(--serif);font-size:1.2rem;line-height:1.6;font-style:italic;
+         border-left:3px solid var(--uc-yellow);padding:.15rem 0 .15rem 1.15rem;
+         margin:0 0 2rem;max-width:58ch}
+  .state{background:var(--surface-2);border-left:3px solid var(--brand);padding:.9rem 1.1rem;
+         margin:0 0 1.7rem;font-size:var(--fs-sm);max-width:58ch}
+  .state b{font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:var(--fs-xs);
+           color:var(--muted);display:block;margin-bottom:.4rem}
+
+  ul.plain{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.6rem;max-width:62ch}
+  ul.plain li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:.75rem;align-items:baseline;
+              font-size:var(--fs-sm);line-height:1.55}
+  ul.plain li::before{content:"";width:5px;height:5px;margin-top:.5em;background:var(--rule,var(--uc-yellow))}
+  .pillar{font-weight:700}
+
+  /* ---------- Escena generativa ---------- */
+  .scene{width:100%;height:170px;display:block;border-radius:2px;margin:0 0 1.6rem;
+         background:var(--surface-2)}
+  .hero-wrap{position:relative;margin:0 0 2rem;border-radius:2px;overflow:hidden;
+             background:var(--uc-blue)}
+  .hero-canvas{display:block;width:100%;height:230px}
+  .hero-txt{position:absolute;inset:auto 0 0 0;padding:1.2rem clamp(16px,4vw,28px);
+            background:linear-gradient(to top,rgba(0,40,68,.92),rgba(0,40,68,0))}
+  .hero-txt p{margin:0;color:#EAF3F9;font-size:var(--fs-sm);max-width:44ch}
+  .hero-txt b{color:var(--uc-yellow);font-weight:700}
+
+  /* ---------- Voz de Don Bosco ---------- */
+  .db{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.1rem;align-items:start;
+      background:var(--surface);border:1px solid var(--hairline);border-left:3px solid var(--uc-yellow);
+      padding:1.2rem 1.3rem;margin:2rem 0 0;max-width:42rem;box-shadow:var(--shadow)}
+  .db .star{width:2.4rem;height:2.4rem;flex:none}
+  .db .star svg{width:100%;height:100%;stroke:var(--uc-yellow);stroke-width:1.6;fill:none;stroke-linecap:round}
+  .db q{font-family:var(--serif);font-style:italic;font-size:1.1rem;line-height:1.55;display:block;
+        quotes:"«" "»"}
+  .db cite{display:block;margin-top:.6rem;font-style:normal;font-size:var(--fs-xs);
+           letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---------- Guía: figura 3D + mensaje ---------- */
+  .guide{display:grid;grid-template-columns:124px minmax(0,1fr);gap:1.1rem;align-items:stretch;
+         background:var(--surface);border:1px solid var(--hairline);border-radius:2px;
+         margin:0 0 2rem;box-shadow:var(--shadow);max-width:42rem;overflow:hidden}
+  .guide-fig{background:linear-gradient(160deg,#00263F,#00537F);display:flex;align-items:flex-end;
+             justify-content:center;position:relative;min-height:168px}
+  .guide-fig canvas{width:124px;height:168px;display:block;cursor:grab;touch-action:none}
+  .guide-body{padding:1.05rem 1.2rem 1.05rem 0;display:flex;flex-direction:column;justify-content:center}
+  .guide-name{font-size:var(--fs-xs);font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+              color:var(--muted);margin:0 0 .55rem}
+  .guide-q{font-family:var(--serif);font-style:italic;font-size:1.06rem;line-height:1.5;margin:0}
+  .guide-cite{display:block;margin-top:.5rem;font-size:var(--fs-xs);letter-spacing:.06em;
+              text-transform:uppercase;color:var(--muted)}
+  .guide-tip{font-size:var(--fs-sm);color:var(--muted);line-height:1.5;margin:.7rem 0 0;
+             padding-top:.7rem;border-top:1px solid var(--hairline)}
+  .guide-tip:first-child{margin-top:0;padding-top:0;border-top:0}
+  @media (max-width:520px){
+    .guide{grid-template-columns:96px minmax(0,1fr)}
+    .guide-fig{min-height:132px}
+    .guide-fig canvas{width:96px;height:132px}
+    .guide-body{padding:.9rem 1rem .9rem 0}
+  }
+
+  /* ---------- Síntesis descargable ---------- */
+  .synth{margin:0;max-width:40rem}
+  .synth img{width:100%;height:auto;display:block;border:1px solid var(--hairline);border-radius:2px;
+             box-shadow:var(--shadow)}
+  .synth-help{font-size:var(--fs-xs);color:var(--muted);margin:.7rem 0 0;line-height:1.5}
+
+  /* ---------- Formularios ---------- */
+  .field{display:flex;flex-direction:column;gap:.45rem;margin:0 0 1.4rem;max-width:36rem}
+  .field label{font-size:var(--fs-sm);font-weight:600}
+  .field .hint{font-size:var(--fs-xs);color:var(--muted)}
+  input[type="text"],textarea{font-family:var(--sans);font-size:var(--fs-base);color:var(--ink);
+    background:var(--surface);border:1px solid var(--hairline-strong);border-radius:2px;
+    padding:.7rem .85rem;width:100%;transition:border-color .18s,box-shadow .18s}
+  textarea{resize:vertical;min-height:7rem;line-height:1.55}
+  input[type="text"]:focus-visible,textarea:focus-visible{outline:none;border-color:var(--brand);
+    box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 24%,transparent)}
+  .counter{font-size:var(--fs-xs);color:var(--muted);font-variant-numeric:tabular-nums}
+
+  /* ---------- Botones ---------- */
+  .btn{font-family:var(--sans);font-size:var(--fs-sm);font-weight:700;letter-spacing:.02em;
+       background:var(--brand);color:var(--on-brand);border:1px solid var(--brand);border-radius:2px;
+       padding:.75rem 1.5rem;cursor:pointer;transition:background .18s,opacity .18s}
+  .btn:hover:not(:disabled){background:var(--brand-2);border-color:var(--brand-2)}
+  .btn:disabled{opacity:.36;cursor:not-allowed}
+  .btn.ghost{background:transparent;color:var(--ink);border-color:var(--hairline-strong)}
+  .btn.ghost:hover{border-color:var(--brand);color:var(--brand);background:transparent}
+  .btn:focus-visible{outline:2px solid var(--uc-yellow);outline-offset:3px}
+  .actions{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;margin-top:2rem}
+
+  /* ---------- Opciones ---------- */
+  .choices{display:flex;flex-direction:column;gap:.85rem;margin:0;padding:0;border:0}
+  .choice{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.1rem;align-items:start;
+    text-align:left;background:var(--surface);border:1px solid var(--hairline);border-radius:2px;
+    padding:1.15rem 1.25rem;cursor:pointer;font-family:var(--sans);font-size:var(--fs-base);
+    color:var(--ink);line-height:1.5;box-shadow:var(--shadow);
+    transition:border-color .18s,transform .18s}
+  .choice:hover{border-color:var(--uc-yellow);transform:translateY(-1px)}
+  .choice:focus-visible{outline:2px solid var(--uc-yellow);outline-offset:3px}
+  .choice .mark{width:2.05rem;height:2.05rem;display:grid;place-items:center;font-weight:800;
+                font-size:var(--fs-sm);color:var(--on-brand);background:var(--brand);border-radius:2px}
+
+  /* ---------- Paneles ---------- */
+  .panel{background:var(--surface);border:1px solid var(--hairline);border-radius:2px;
+         padding:1.3rem 1.4rem;box-shadow:var(--shadow);max-width:40rem}
+  .panel h3{margin-top:0}
+  .echo{font-family:var(--serif);font-style:italic;font-size:1.05rem;line-height:1.6;margin:.4rem 0 0;
+        white-space:pre-wrap;overflow-wrap:anywhere}
+  .rule{border:0;border-top:1px solid var(--hairline);margin:2.4rem 0}
+  .tag{display:inline-block;font-size:var(--fs-xs);font-weight:700;letter-spacing:.14em;
+       text-transform:uppercase;color:var(--tone,var(--brand));margin:0 0 .9rem}
+  .toast{font-size:var(--fs-sm);color:var(--muted);opacity:0;transition:opacity .25s}
+  .toast.show{opacity:1}
+
+  /* ---------- Perfil ---------- */
+  .bars{display:flex;flex-direction:column;gap:1.1rem;max-width:40rem}
+  .bar-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.5rem .9rem;align-items:baseline}
+  .bar-name{font-size:var(--fs-sm);font-weight:700;color:var(--tone)}
+  .bar-pct{font-size:var(--fs-sm);font-weight:700;font-variant-numeric:tabular-nums;color:var(--tone)}
+  .bar-track{grid-column:1/-1;height:10px;background:var(--surface-2);overflow:hidden}
+  .bar-fill{height:100%;background:var(--tone);width:0;transition:width .9s cubic-bezier(.2,.7,.3,1)}
+  .legend{display:flex;flex-wrap:wrap;gap:.35rem 1.2rem;margin:1rem 0 0;font-size:var(--fs-xs);color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:.4rem}
+  .legend i{width:10px;height:10px;background:var(--tone);display:inline-block}
+  .disclaim{border:1px dashed var(--hairline-strong);padding:1rem 1.15rem;font-size:var(--fs-sm);
+            color:var(--muted);max-width:40rem;line-height:1.55}
+  ol.practices{margin:0;padding-left:1.2rem;display:flex;flex-direction:column;gap:.7rem;max-width:40rem}
+  ol.practices li{font-size:var(--fs-sm);line-height:1.55;padding-left:.2rem}
+  ol.practices li::marker{color:var(--tone);font-weight:800}
+
+  .brandbar{display:flex;align-items:center;gap:.7rem;margin:0 0 1.4rem}
+  .brandbar .weave{width:34px;height:34px;flex:none}
+  .brandbar span{font-size:var(--fs-xs);font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+                 color:var(--muted);line-height:1.35}
+
+  .screen{animation:rise .42s cubic-bezier(.2,.7,.3,1) both}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .nojs{background:var(--surface);border:1px solid var(--hairline);
+        border-top:3px solid var(--uc-yellow);border-radius:2px;
+        padding:1.6rem 1.7rem;box-shadow:var(--shadow);max-width:40rem}
+  .nojs h1{margin:.3rem 0 .9rem}
+  .nojs p{margin:0 0 .7rem}
+</style>
+
+<header class="topbar">
+  <button class="back" id="back" disabled>
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg> Atrás
+  </button>
+  <div class="prog" id="prog" aria-hidden="true"></div>
+  <span class="prog-lab" id="proglab">Inicio</span>
+</header>
+
+<div class="stage">
+  <aside class="rail"><div id="rail"></div><p class="rail-cap">tu recorrido</p></aside>
+  <main id="app" tabindex="-1">
+    <div class="nojs">
+      <p class="eyebrow">Universidad Católica Silva Henríquez</p>
+      <h1 style="font-size:1.85rem">El juego está en este archivo</h1>
+      <p>La experiencia completa viene dentro. No se está mostrando porque la estás abriendo en la <b>vista previa</b> de WhatsApp, del correo o de la app de archivos, y esa vista no ejecuta el contenido interactivo.</p>
+      <p style="margin-top:1.1rem"><b>Un paso y arranca:</b></p>
+      <ul class="plain" style="--rule:var(--uc-yellow);margin-top:.6rem">
+        <li><span><b>iPhone o iPad:</b> toca el ícono de compartir (el cuadrado con la flecha, abajo a la derecha) y elige <b>Abrir en Chrome</b> o <b>Abrir en Safari</b>.</span></li>
+        <li><span><b>Android:</b> guarda el archivo y ábrelo desde la app Archivos eligiendo <b>Chrome</b>.</span></li>
+        <li><span><b>Windows o Mac:</b> descarga el archivo y ábrelo con doble clic. Arranca solo, sin más pasos.</span></li>
+      </ul>
+    </div>
+  </main>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var app=document.getElementById("app"), railBox=document.getElementById("rail");
+  var backBtn=document.getElementById("back"), progEl=document.getElementById("prog"), progLab=document.getElementById("proglab");
+  var REDUCED = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  var P={
+    razon:{name:"Razón",tone:"var(--p1-fill)",ink:"var(--p1-ink)"},
+    trasc:{name:"Religión-Trascendencia",tone:"var(--p2-fill)",ink:"var(--p2-ink)"},
+    amor:{name:"Amor",tone:"var(--p3-fill)",ink:"var(--p3-ink)"}
+  };
+  var KEYS=["razon","trasc","amor"];
+
+  /* ============ Citas documentadas de Don Bosco ============ */
+  var DB={
+    marco:{q:"Este sistema se apoya por entero en la razón, en la religión y en la amabilidad.",
+           s:"San Juan Bosco · El sistema preventivo en la educación de la juventud, 1877"},
+    vinculo:{q:"La familiaridad engendra amor, y el amor engendra confianza. Esto es lo que abre los corazones.",
+           s:"San Juan Bosco · Carta de Roma, 1884"},
+    castigo:{q:"Excluye todo castigo violento y procura alejar los mismos castigos suaves.",
+           s:"San Juan Bosco · El sistema preventivo en la educación de la juventud, 1877"},
+    cierre:{q:"Que los jóvenes no sólo sean amados, sino que ellos mismos se den cuenta de que son amados.",
+           s:"San Juan Bosco · Carta de Roma, 1884"}
+  };
+
+  /* ============ Escenarios ============ */
+  var SC=[
+  { id:"planificacion", tag:"Escenario 1 · La planificación dividida", scene:0,
+    title:"Quedan pocos días y el equipo está partido en dos",
+    story:["{N} participa en una organización universitaria que desarrolla actividades para la comunidad estudiantil. Como parte del equipo coordinador, debe tomar decisiones junto a otros compañeros.",
+           "Están preparando una actividad importante y quedan pocos días para cerrar la planificación. Un grupo quiere una acción masiva, con difusión y alcance. Otro cree que es mejor algo más sencillo, pero cercano y significativo.",
+           "La discusión empieza a tensarse. Algunos integrantes sienten que sus opiniones no se están considerando."],
+    voice:"«El equipo necesita definir hoy. Si sigo abriendo espacios de diálogo, podemos perder tiempo y no llegar preparados. Si decido rápido, algunos van a sentir que sus opiniones no importan.»",
+    ask:"¿Qué deberías hacer?", fundar:"¿Qué criterio utilizaste para tomar esta decisión?", db:null,
+    opts:[
+     {k:"A",label:"Cerrar tú la decisión hoy y comunicarla con los argumentos a la vista.",
+      w:{razon:65,trasc:10,amor:25},s:{tiempo:2,confianza:-1,sentido:0},
+      cons:["{N} cierra la planificación y el equipo empieza a producir de inmediato. Algunos agradecen que por fin haya una dirección clara.",
+            "Otros dos integrantes dejan de proponer cosas. No reclaman: simplemente ejecutan lo que se les pide. {N} gana una semana de trabajo y una conversación pendiente."]},
+     {k:"B",label:"Detener la planificación y abrir un espacio para entender qué busca cada grupo.",
+      w:{razon:25,trasc:30,amor:45},s:{tiempo:-2,confianza:2,sentido:1},
+      cons:["Cada grupo explica qué quiere lograr, y aparece algo que nadie había dicho: las dos propuestas respondían a preocupaciones distintas, no opuestas.",
+            "El equipo sale más unido y con tres ideas nuevas sobre la mesa. También sale sin decisión tomada, y con dos días menos."]},
+     {k:"C",label:"Llevarlo a votación: que el equipo resuelva y todos hayan podido participar.",
+      w:{razon:55,trasc:10,amor:35},s:{tiempo:1,confianza:0,sentido:-1},
+      cons:["Cada grupo expone y se vota. Gana una propuesta por diferencia estrecha y la planificación arranca ese mismo día.",
+            "Quienes quedaron en minoría cumplen su parte sin discutir. En la reunión siguiente, uno de ellos pregunta si vale la pena seguir opinando."]}]},
+
+  { id:"ausente", tag:"Escenario 2 · El que dejó de venir", scene:1,
+    title:"Camila lleva tres semanas sin aparecer",
+    story:["Camila tenía a cargo la convocatoria. Lleva tres semanas sin llegar a las reuniones y responde los mensajes del grupo con monosílabos.",
+           "En el equipo ya circula una versión: que perdió el interés. Alguien repartió su trabajo entre dos personas sin avisarle, y esas dos personas están molestas.",
+           "Falta una semana para la próxima actividad."],
+    voice:"«Necesito la convocatoria cerrada. Pero hace tres semanas que nadie le pregunta a Camila qué le pasa, y yo tampoco lo hice.»",
+    ask:"¿Qué haces?", fundar:null, db:"vinculo",
+    opts:[
+     {k:"A",label:"Formalizar el cambio: reasignar la tarea y avisarle que ya no tiene esa responsabilidad.",
+      w:{razon:70,trasc:5,amor:25},s:{tiempo:1,confianza:-2,sentido:0},
+      cons:["La convocatoria queda cubierta y el equipo respira. Camila responde el mensaje con un «ok».",
+            "No vuelve. Nadie en el equipo menciona el tema otra vez, y {N} nota que ahora hay un tema del que no se habla."]},
+     {k:"B",label:"Buscarla en persona antes de tocar nada, sin reproche y sin agenda.",
+      w:{razon:15,trasc:25,amor:60},s:{tiempo:-1,confianza:2,sentido:1},
+      cons:["Camila cuenta algo que {N} no sabía: dejó de venir después de que en una reunión se descartara su idea en diez segundos, delante de todos.",
+            "Vuelve al equipo. Pero ahora {N} tiene un problema nuevo y más incómodo que el anterior: quien la interrumpió también está en el equipo, y no tiene idea de lo que provocó."]},
+     {k:"C",label:"Llevar el tema al equipo para que decidan juntos qué hacer con ella.",
+      w:{razon:40,trasc:15,amor:45},s:{tiempo:-1,confianza:0,sentido:-1},
+      cons:["El equipo conversa el caso y acuerda darle un plazo. La decisión es transparente y todos participaron de ella.",
+            "Camila se entera del acuerdo por un tercero. Le llega como un veredicto sobre ella tomado sin ella."]}]},
+
+  { id:"vacia", tag:"Escenario 3 · La actividad que salió bien", scene:2,
+    title:"Ciento veinte personas, buenas fotos, y una pregunta sin respuesta",
+    story:["La actividad se hizo. Asistieron ciento veinte estudiantes nuevos, las fotos quedaron bien y la dirección felicitó al equipo por escrito.",
+           "En la evaluación interna, alguien pregunta: «estuvo buena, pero ¿para qué la hicimos?». Se produce un silencio de varios segundos y la reunión sigue con otro tema.",
+           "Al final, un integrante propone repetir exactamente la misma fórmula el próximo mes, porque funcionó."],
+    voice:"«Tengo un resultado que puedo mostrar y un equipo que necesita victorias. Y no sé responder para qué lo hicimos.»",
+    ask:"¿Qué haces con la propuesta de repetir?", fundar:null, db:null,
+    opts:[
+     {k:"A",label:"Aprobar la repetición. Funcionó, hay evidencia y el equipo necesita seguir ganando.",
+      w:{razon:55,trasc:10,amor:35},s:{tiempo:1,confianza:1,sentido:-2},
+      cons:["El equipo trabaja con confianza sobre una fórmula probada y la segunda versión sale aún mejor que la primera.",
+            "La pregunta del silencio no vuelve a aparecer. Tampoco desaparece: simplemente ya nadie la hace en voz alta."]},
+     {k:"B",label:"Frenar la planificación y dedicar la próxima reunión completa a por qué existe este equipo.",
+      w:{razon:20,trasc:60,amor:20},s:{tiempo:-2,confianza:0,sentido:2},
+      cons:["La conversación es lenta y por momentos incómoda. A la hora y media aparece una frase que varios anotan, y que después terminará ordenando el semestre.",
+            "El equipo pierde el mes siguiente y no hay actividad. Dos integrantes preguntan si esto sirvió de algo."]},
+     {k:"C",label:"Repetirla, pero cambiando una sola cosa: que los asistentes digan qué se llevan.",
+      w:{razon:40,trasc:40,amor:20},s:{tiempo:0,confianza:0,sentido:1},
+      cons:["La segunda versión se hace con un cierre de cinco minutos donde los asistentes escriben qué se llevan. Aparecen respuestas que nadie esperaba.",
+            "El equipo empieza a discutir sobre esas respuestas en vez de sobre la asistencia. El cambio fue mínimo; la conversación cambió entera."]}]},
+
+  { id:"error", tag:"Escenario 4 · El error de Tomás", scene:3,
+    title:"Cuarenta estudiantes nuevos llegaron y no había sala",
+    story:["Tomás olvidó confirmar el espacio. Cuarenta estudiantes nuevos llegaron a una puerta cerrada y la actividad terminó resolviéndose a medias, de pie, en un pasillo.",
+           "Tres integrantes piden que se le retire la responsabilidad y que quede constancia de lo ocurrido. El argumento es razonable: si no pasa nada, vuelve a pasar.",
+           "Tomás no ha hablado desde entonces. Llegó a la reunión y se sentó al final."],
+    voice:"«Si no hago nada, el equipo va a entender que da lo mismo. Si lo sanciono delante de todos, gano orden y pierdo a Tomás.»",
+    ask:"¿Qué haces?", fundar:"Antes de continuar: ¿qué criterio usaste para decidir sobre Tomás?", db:"castigo",
+    opts:[
+     {k:"A",label:"Retirarle la responsabilidad. El error fue grave y el equipo necesita ver que hay consecuencias.",
+      w:{razon:65,trasc:10,amor:25},s:{tiempo:1,confianza:-1,sentido:-1},
+      cons:["El equipo recibe la señal con claridad y los procedimientos se aprietan: nadie vuelve a dejar una reserva sin confirmar.",
+            "Tomás sigue viniendo tres semanas más y después deja de venir. Nunca dijo por qué, y nadie se lo preguntó."]},
+     {k:"B",label:"Hablar con Tomás a solas primero, antes de que el equipo decida nada.",
+      w:{razon:20,trasc:25,amor:55},s:{tiempo:-1,confianza:2,sentido:1},
+      cons:["Tomás cuenta que había asumido tres tareas más de las que podía y que no supo cómo decirlo. Pide él mismo dejar la responsabilidad por un tiempo.",
+            "Vuelve al equipo. Los tres que pedían sanción sienten que el tema se resolvió por fuera de ellos, y {N} todavía les debe una explicación."]},
+     {k:"C",label:"Llevarlo al equipo como revisión del sistema: qué falló en el proceso, no en la persona.",
+      w:{razon:45,trasc:25,amor:30},s:{tiempo:-1,confianza:1,sentido:1},
+      cons:["La revisión saca a la luz que nadie tenía claro quién confirmaba qué, y el equipo sale con un procedimiento que antes no existía.",
+            "Tomás participa y agradece. Pero uno de los tres dice, al salir, que aquí los errores no cuestan nada."]}]}];
+
+  var PRACTICE={
+    razon:["Antes de cada reunión, escribe en una línea el criterio con el que vas a decidir. Léelo en voz alta al abrir: obliga al equipo a discutir el criterio, no solo la propuesta.",
+           "Cuando alguien proponga algo, pregunta por los recursos y el tiempo que necesita antes de decir si te gusta. En ese orden.",
+           "Al terminar cada actividad, anota una decisión que tomaste y qué produjo realmente. Revisa esas notas al final del semestre: ahí está tu formación, no en el recuerdo."],
+    trasc:["Abre cada planificación con la pregunta por el para qué, antes de hablar de fechas, tareas o difusión. Si el equipo no la puede responder en dos minutos, todavía no es momento de planificar.",
+           "Cuando el equipo celebre un resultado, pregunta qué se llevó la gente, no cuánta gente vino. Son dos evaluaciones distintas y solo una habla del sentido.",
+           "Elige una actividad del semestre y escribe en tres líneas qué tiene que ver con la comunidad que quieren construir. Compártela con el equipo y deja que la discutan."],
+    amor:["Después de cada decisión difícil, busca en las siguientes cuarenta y ocho horas a quien quedó en desacuerdo. Sin agenda y sin volver a explicar tu decisión: solo escuchar.",
+          "Cuando alguien falte, pregunta por la persona antes de preguntar por su tarea. El orden de esas dos preguntas es todo el Sistema Preventivo.",
+          "En cada reunión, asegúrate de que hable quien menos habla, nombrándolo directamente. La participación no se abre sola: se convoca."]};
+
+  var DOMINANT_NOTE={
+    razon:"Decides mirando consecuencias, tiempos y recursos. Es el pilar que sostiene decisiones que se pueden defender — y el que, solo, convierte a un equipo en una máquina de cumplir plazos.",
+    trasc:"Decides volviendo a la pregunta por el sentido. Es el pilar que impide que la actividad se coma al propósito — y el que, solo, produce comunidades que discuten mucho y ejecutan poco.",
+    amor:"Decides mirando primero a las personas y los vínculos. Es el pilar que sostiene comunidad — y el que, solo, deja al equipo sin criterio cuando hay que cerrar y alguien va a quedar disconforme."};
+  var BLIND_NOTE={
+    razon:"Apareció poco en tus decisiones. Cuidar a las personas y sostener el sentido no reemplaza tener un criterio explícito: sin razón, las decisiones se vuelven difíciles de explicar y el equipo no sabe qué esperar.",
+    trasc:"Apareció poco en tus decisiones. Resolviste bien lo operativo y lo relacional, pero la pregunta por el para qué casi no entró. Es la que evita que un equipo funcione perfectamente hacia ninguna parte.",
+    amor:"Apareció poco en tus decisiones. Tus criterios y tu sentido del propósito están firmes, pero varias decisiones se tomaron sin las personas que las iban a vivir. En el Sistema Preventivo eso no es un detalle de estilo."};
+  var SHAPE_TEXT={
+    integrado:"Tu reparto es <b>integrado</b>: ninguno de los tres pilares cargó con el peso de las decisiones. Es lo que el Sistema Preventivo pide, y es más difícil de sostener cuando las decisiones son reales y hay alguien esperando una respuesta.",
+    inclinado:"Tu reparto es <b>inclinado</b>: hay un pilar que llevas por delante, pero los otros dos siguen presentes. Es el patrón más frecuente, y el más fácil de trabajar.",
+    concentrado:"Tu reparto es <b>concentrado</b>: un pilar cargó con casi todas tus decisiones. Eso da coherencia y también un punto ciego grande: cuando la situación pida otro pilar, vas a resolverla con el único que tienes a mano."};
+
+
+  /* Preguntas de los tres pilares, según la alternativa elegida */
+  var FUNDQ={
+    planificacion:[
+      {razon:"¿Calculaste cuánto tiempo le ganabas al equipo, o cerraste porque la discusión te incomodaba?",
+       trasc:"La propuesta que elegiste, ¿es la que mejor responde al para qué de la actividad, o la más fácil de ejecutar?",
+       amor:"¿Sabes quiénes van a quedar disconformes con esto, y qué harás con ellos mañana?"},
+      {razon:"Abriste el diálogo. ¿Definiste también cómo y cuándo se cierra? Sin eso, escuchar se vuelve postergar.",
+       trasc:"¿Qué pregunta pusiste sobre la mesa: qué quiere cada uno, o para qué existe esta actividad?",
+       amor:"¿Abriste el espacio para todos, o para los que ya hablaban?"},
+      {razon:"¿Pusiste criterios antes de votar, o la votación fue el criterio?",
+       trasc:"Una mayoría te dice quién tiene más apoyo. ¿Te dice cuál es el mayor bien para esta comunidad?",
+       amor:"¿Qué vas a hacer con quienes queden en minoría, una vez que el resultado esté contado?"}
+    ],
+    error:[
+      {razon:"¿Le retiraste la responsabilidad para que el error no se repita, o para que el equipo viera que reaccionaste?",
+       trasc:"¿Qué le enseña esta decisión al equipo sobre lo que aquí se hace con quien falla?",
+       amor:"Tomás no ha hablado desde el error. ¿Alguien le preguntó qué pasó antes de que tú decidieras?"},
+      {razon:"Escuchaste primero. ¿Y qué harás con el problema concreto, que es que la sala no se confirmó?",
+       trasc:"¿Estás cuidando a Tomás, o estás evitando el conflicto con los tres que pedían sanción?",
+       amor:"¿Qué les dices a esos tres, que también son parte de tu comunidad y también quedaron expuestos?"},
+      {razon:"¿Es cierto que falló el proceso, o esa lectura te permite no nombrar lo que pasó?",
+       trasc:"Revisar el sistema ordena el trabajo. ¿Alcanza para que Tomás vuelva a sentirse parte?",
+       amor:"Corregir sin castigar es preventivo. ¿Cómo evitas que se lea como que aquí los errores no cuestan nada?"}
+    ]
+  };
+
+  /* ============ Estado + historial ============ */
+  var S,ST,HIST=[];
+  function reset(keep){
+    var n=keep?S.name:"", c=keep?S.community:"";
+    S={name:n,community:c,phase:"intro",sc:0,picks:[],fund:{}};
+    ST={confianza:0,sentido:0,tiempo:0}; HIST=[];
+  }
+  S={name:"",community:""}; reset(false);
+
+  function snap(){ return JSON.stringify({S:S,ST:ST}); }
+  function restore(j){ var o=JSON.parse(j); S=o.S; ST=o.ST; }
+
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function who(){return esc(S.name||"Sebastián");}
+  function fill(t){return t.replace(/\{N\}/g,who());}
+  function dominantOf(o){var b="razon";KEYS.forEach(function(k){if(o.w[k]>o.w[b])b=k;});return b;}
+
+  /* ============ Arte generativo: el tejido UCSH ============ */
+  var BLUE="#004575", BLUE_D="#00263F", YEL="#FCBC00";
+
+  /* Tejido entrelazado: urdimbre azul (horizontal) y trama amarilla (vertical),
+     con alternancia real de encima/debajo. Cada variante rompe el tejido de otro modo. */
+  function weave(cv, variant, t){
+    var d=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    if(!W||!H) return;
+    cv.width=W*d; cv.height=H*d;
+    var g=cv.getContext("2d"); g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,W,H);
+
+    var grad=g.createLinearGradient(0,0,W*.7,H);
+    grad.addColorStop(0,BLUE_D); grad.addColorStop(1,"#003A63");
+    g.fillStyle=grad; g.fillRect(0,0,W,H);
+
+    var rows=7, cols=Math.max(12,Math.round(W/44));
+    var pitchY=H/rows, pitchX=W/cols, bh=pitchY*.46, bw=pitchX*.42, ph=t*.00045;
+
+    function hy(r){ return pitchY*(r+.5)-bh/2 + Math.sin(ph+r*.8)*(variant===0?3.5:1.2); }
+    function vx(c){ return pitchX*(c+.5)-bw/2 + Math.cos(ph*1.2+c*.6)*(variant===3?3:1); }
+
+    function hAlpha(r){
+      if(variant===1 && r===3) return .10;                 // hilo ausente
+      if(variant===0) return r%2 ? .95 : .55;              // urdimbre desalineada
+      return .9;
+    }
+    function hSpan(r){
+      if(variant===0) return r%2 ? [0,W*.58] : [W*.34,W];  // tejido partido en dos
+      if(variant===3 && r===4) return [0,W*.44];           // hilo roto
+      return [0,W];
+    }
+    function vAlpha(c){
+      if(variant===1 && c===Math.floor(cols/2)) return .12;
+      if(variant===2 && c>cols*.36 && c<cols*.64) return .16;  // centro hueco
+      if(variant===3 && c===Math.floor(cols*.47)) return .22;
+      return .92;
+    }
+
+    // 1 · urdimbre completa
+    for(var r=0;r<rows;r++){
+      var sp=hSpan(r); g.globalAlpha=hAlpha(r); g.fillStyle="#0A5F92";
+      g.fillRect(sp[0],hy(r),sp[1]-sp[0],bh);
+    }
+    // 2 · trama completa
+    for(var c=0;c<cols;c++){
+      g.globalAlpha=vAlpha(c); g.fillStyle=YEL;
+      g.fillRect(vx(c),0,bw,H);
+    }
+    // 3 · entrelazado: en los cruces pares vuelve a pasar la urdimbre por encima
+    for(r=0;r<rows;r++){
+      var sp2=hSpan(r); g.globalAlpha=hAlpha(r); g.fillStyle="#0A5F92";
+      for(c=0;c<cols;c++){
+        if((r+c)%2) continue;
+        var x=vx(c);
+        if(x+bw < sp2[0] || x > sp2[1]) continue;
+        g.fillRect(Math.max(x-3,sp2[0]), hy(r), Math.min(bw+6, sp2[1]-x+3), bh);
+      }
+    }
+    // 4 · luz
+    g.globalAlpha=1;
+    var lg=g.createRadialGradient(W*.24,H*.1,10,W*.24,H*.1,W*.9);
+    lg.addColorStop(0,"rgba(255,255,255,.16)"); lg.addColorStop(1,"rgba(0,20,36,.42)");
+    g.fillStyle=lg; g.fillRect(0,0,W,H);
+  }
+
+  var sceneTimers=[];
+  function animateScenes(){
+    sceneTimers.forEach(function(id){cancelAnimationFrame(id);}); sceneTimers=[];
+    Array.prototype.forEach.call(document.querySelectorAll("canvas.scene"), function(cv){
+      var v=Number(cv.getAttribute("data-v"));
+      if(REDUCED){ weave(cv,v,0); return; }
+      var start=performance.now();
+      (function loop(now){ weave(cv,v,now-start); sceneTimers.push(requestAnimationFrame(loop)); })(start);
+    });
+  }
+
+  /* ============ Estrella 3D interactiva (marca UCSH) ============ */
+  var heroRAF=null, pointer={x:0,y:0};
+  function star3d(cv){
+    var g=cv.getContext("2d"), pts=[], i;
+    // 4 ejes cruzados en 3D → asterisco de 8 puntas
+    var axes=[[1,0,0],[0,1,0],[0,0,1],[1,1,1],[1,-1,1],[-1,1,1],[1,1,-1]];
+    axes.forEach(function(a){
+      var n=Math.hypot(a[0],a[1],a[2]);
+      pts.push([[a[0]/n,a[1]/n,a[2]/n],[-a[0]/n,-a[1]/n,-a[2]/n]]);
+    });
+    var start=performance.now();
+    function frame(now){
+      var d=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+      cv.width=W*d; cv.height=H*d; g.setTransform(d,0,0,d,0,0);
+      g.clearRect(0,0,W,H);
+      var t=(now-start)/1000;
+      var ry=(REDUCED?0.6:t*0.32)+pointer.x*0.9, rx=(REDUCED?0.3:Math.sin(t*0.22)*0.35)+pointer.y*0.7;
+      var cx=W*0.78, cy=H*0.46, R=Math.min(W,H)*0.34;
+      // tejido de fondo, detrás de la estrella
+      var bgr=g.createLinearGradient(0,0,W,H);
+      bgr.addColorStop(0,"#00263F"); bgr.addColorStop(1,"#004575");
+      g.fillStyle=bgr; g.fillRect(0,0,W,H);
+      g.globalAlpha=.5;
+      for(i=0;i<6;i++){ g.fillStyle="#0A5F92"; g.fillRect(0,H*(i+1)/7-5,W*0.66,10); }
+      g.globalAlpha=.30;
+      for(i=0;i<4;i++){ g.fillStyle=YEL; g.fillRect(W*(0.04+i*0.085),0,12,H); }
+      g.globalAlpha=1;
+      function proj(p){
+        var x=p[0],y=p[1],z=p[2];
+        var x1=x*Math.cos(ry)-z*Math.sin(ry), z1=x*Math.sin(ry)+z*Math.cos(ry);
+        var y1=y*Math.cos(rx)-z1*Math.sin(rx), z2=y*Math.sin(rx)+z1*Math.cos(rx);
+        var s=1/(1.9-z2*0.55);
+        return [cx+x1*R*s*1.9, cy+y1*R*s*1.9, z2, s];
+      }
+      pts.forEach(function(seg){
+        var a=proj(seg[0]), b=proj(seg[1]);
+        var depth=(a[2]+b[2])/2;
+        g.strokeStyle = depth>0 ? YEL : "#3E7FA8";
+        g.globalAlpha = 0.55+0.45*((depth+1)/2);
+        g.lineWidth = 1.6+2.4*((depth+1)/2);
+        g.lineCap="round";
+        g.beginPath(); g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); g.stroke();
+      });
+      g.globalAlpha=1;
+      heroRAF=requestAnimationFrame(frame);
+    }
+    if(heroRAF) cancelAnimationFrame(heroRAF);
+    frame(performance.now());
+    cv.addEventListener("pointermove",function(e){
+      var r=cv.getBoundingClientRect();
+      pointer.x=((e.clientX-r.left)/r.width-0.5)*2;
+      pointer.y=((e.clientY-r.top)/r.height-0.5)*2;
+    });
+    cv.addEventListener("pointerleave",function(){ pointer.x=0; pointer.y=0; });
+  }
+
+  /* ============ Rail ============ */
+  var FORKS=[56,172,288,404], JOING=72, ENDY=500;
+  var RLAB=["1 · La planificación","2 · Camila","3 · La actividad","4 · Tomás"];
+  function buildRail(){
+    var p=['<svg class="rail-svg" viewBox="0 0 170 546">'];
+    p.push('<path class="seg spine" id="sp-top" d="M26 18 V56"/>');
+    FORKS.forEach(function(F,i){
+      var M=F+36,J=F+JOING;
+      p.push('<g class="d" id="d'+i+'">');
+      p.push('<path class="seg br" data-o="0" d="M26 '+F+' C26 '+(F+14)+' 8 '+(M-14)+' 8 '+M+' C8 '+(M+14)+' 26 '+(J-14)+' 26 '+J+'"/>');
+      p.push('<path class="seg br" data-o="1" d="M26 '+F+' V'+J+'"/>');
+      p.push('<path class="seg br" data-o="2" d="M26 '+F+' C26 '+(F+14)+' 44 '+(M-14)+' 44 '+M+' C44 '+(M+14)+' 26 '+(J-14)+' 26 '+J+'"/>');
+      p.push("</g>");
+      p.push('<path class="seg spine" id="sp'+i+'" d="M26 '+J+' V'+(i<3?FORKS[i+1]:ENDY)+'"/>');
+    });
+    p.push('<circle class="node" id="n-top" cx="26" cy="18" r="4"/>');
+    FORKS.forEach(function(F,i){
+      p.push('<circle class="halo" id="h'+i+'" cx="26" cy="'+F+'" r="7"/>');
+      p.push('<circle class="node" id="nf'+i+'" cx="26" cy="'+F+'" r="5.5"/>');
+      p.push('<circle class="node" id="nj'+i+'" cx="26" cy="'+(F+JOING)+'" r="4"/>');
+    });
+    p.push('<circle class="halo" id="hend" cx="26" cy="'+ENDY+'" r="7"/>');
+    p.push('<circle class="node" id="n-end" cx="26" cy="'+ENDY+'" r="5.5"/>');
+    FORKS.forEach(function(F,i){
+      p.push('<g class="rl" id="rl'+i+'" tabindex="0"><title id="tt'+i+'">'+RLAB[i]+'</title>');
+      p.push('<text class="rl-lab" x="56" y="'+(F+2)+'">'+RLAB[i]+'</text>');
+      p.push('<text class="rl-sub" id="rs'+i+'" x="56" y="'+(F+17)+'"></text></g>');
+    });
+    p.push('<g class="rl" id="rlend"><text class="rl-lab" x="56" y="'+(ENDY+2)+'">Tu perfil</text>');
+    p.push('<text class="rl-sub" id="rsend" x="56" y="'+(ENDY+17)+'"></text></g>');
+    p.push("</svg>");
+    railBox.innerHTML=p.join("");
+  }
+  function paintRail(){
+    var atEnd=(S.phase==="perfil"), active=S.sc;
+    document.getElementById("n-top").classList.add("done");
+    document.getElementById("sp-top").classList.add("done");
+    FORKS.forEach(function(F,i){
+      var g=document.getElementById("d"+i), pick=S.picks[i];
+      var isNow = i===active && !atEnd;
+      g.setAttribute("class","d"+(pick?" picked":(isNow?" open":"")));
+      Array.prototype.forEach.call(g.querySelectorAll(".br"),function(b){
+        var on=pick&&Number(b.getAttribute("data-o"))===pick.idx;
+        b.classList.toggle("on",!!on);
+        b.style.stroke=on?P[pick.dom].tone:"";
+      });
+      var nf=document.getElementById("nf"+i), nj=document.getElementById("nj"+i);
+      nf.classList.toggle("done",!!pick); nf.classList.toggle("now",isNow);
+      nj.classList.toggle("done",!!pick);
+      document.getElementById("h"+i).classList.toggle("on",isNow);
+      document.getElementById("sp"+i).classList.toggle("done",!!pick);
+
+      var rl=document.getElementById("rl"+i), rs=document.getElementById("rs"+i);
+      rl.setAttribute("class","rl"+(isNow?" now":(pick?" done":"")));
+      if(isNow && pick){
+        rs.textContent="Elegiste "+SC[i].opts[pick.idx].k+" · aquí"; rs.style.fill="";
+        document.getElementById("tt"+i).textContent=SC[i].opts[pick.idx].label;
+      } else if(isNow){
+        rs.textContent="estás aquí"; rs.style.fill="";
+        document.getElementById("tt"+i).textContent="Estás en este escenario.";
+      } else if(pick){
+        rs.textContent="Elegiste "+SC[i].opts[pick.idx].k;
+        rs.style.fill=P[pick.dom].ink;
+        document.getElementById("tt"+i).textContent=SC[i].opts[pick.idx].label;
+      } else {
+        rs.textContent=""; rs.style.fill="";
+        document.getElementById("tt"+i).textContent=RLAB[i]+" · aún no llegas aquí";
+      }
+    });
+    var ne=document.getElementById("n-end");
+    ne.classList.toggle("now",atEnd); ne.classList.toggle("done",atEnd);
+    document.getElementById("hend").classList.toggle("on",atEnd);
+    document.getElementById("rlend").setAttribute("class","rl"+(atEnd?" now":""));
+    document.getElementById("rsend").textContent = atEnd ? "estás aquí" : "";
+  }
+  function paintTop(){
+    backBtn.disabled = HIST.length===0;
+    var html=""; for(var i=0;i<4;i++){
+      var cls = S.picks[i] ? "on" : (S.phase!=="intro" && S.phase!=="perfil" && i===S.sc ? "cur" : "");
+      html += '<i class="'+cls+'"></i>';
+    }
+    progEl.innerHTML=html;
+    progLab.textContent = S.phase==="intro" ? "Inicio" : (S.phase==="perfil" ? "Tu recorrido" : "Escenario "+(S.sc+1)+" de 4");
+  }
+
+  function stateLines(){
+    var o=[];
+    if(ST.confianza>=3) o.push("El equipo llega suelto: las últimas decisiones dejaron a la gente sintiéndose parte, y proponen sin que haya que pedírselo.");
+    else if(ST.confianza>=1) o.push("El equipo funciona bien. Hay confianza suficiente para discutir sin que nadie se ofenda.");
+    else if(ST.confianza<=-2) o.push("Se nota distancia. Dos integrantes hablan solo cuando se les pregunta y ya nadie propone nada fuera de su tarea.");
+    else if(ST.confianza<=-1) o.push("Hay una tensión que nadie nombra. El equipo cumple, pero las reuniones terminan antes de tiempo.");
+    else o.push("El equipo funciona sin entusiasmo ni conflicto abierto.");
+    if(ST.sentido>=2) o.push("El propósito está claro y aparece solo en las conversaciones: el equipo discute para qué, no solo cómo.");
+    else if(ST.sentido<=-2) o.push("Nadie ha vuelto a preguntar para qué se hace todo esto. Se planifica bien y se planifica a ciegas.");
+    else if(ST.sentido<=-1) o.push("El para qué quedó pendiente en alguna reunión anterior y no volvió a aparecer.");
+    if(ST.tiempo>=2) o.push("Hay margen: van adelantados respecto de lo que necesitan.");
+    else if(ST.tiempo<=-2) o.push("El tiempo está encima. Lo que no se resuelva esta semana ya no alcanza a resolverse.");
+    return o;
+  }
+
+  function profile(){
+    var tot={razon:0,trasc:0,amor:0};
+    S.picks.forEach(function(p){KEYS.forEach(function(k){tot[k]+=p.w[k];});});
+    var n=S.picks.length||1, a=Math.round(tot.razon/n), b=Math.round(tot.trasc/n), c=100-a-b;
+    var pct={razon:a,trasc:b,amor:c};
+    var ord=KEYS.slice().sort(function(x,y){return pct[y]-pct[x];});
+    var sp=pct[ord[0]]-pct[ord[2]];
+    return {pct:pct,top:ord[0],low:ord[2],spread:sp,
+            shape:sp<=12?"integrado":(sp<=25?"inclinado":"concentrado")};
+  }
+
+  var STAR_SVG='<svg viewBox="0 0 24 24"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19"/></svg>';
+  function dbBlock(key){
+    var d=DB[key]; if(!d) return "";
+    return '<div class="db"><div class="star">'+STAR_SVG+'</div><div>'+
+           "<q>"+esc(d.q)+"</q><cite>"+esc(d.s)+"</cite></div></div>";
+  }
+
+  /* ============ Figura 3D de Don Bosco ============ */
+  /* Representación estilizada de baja poligonización. Todo lo que la figura
+     "dice" es cita documentada con fuente, o una indicación funcional de la
+     aplicación — nunca diálogo inventado atribuido a Don Bosco.            */
+  var MESH=null;
+  function buildBust(){
+    var F=[];
+    function quad(a,b,c,d,col){ F.push({v:[a,b,c,d],c:col}); }
+    function lathe(prof,seg,col){
+      for(var i=0;i<seg;i++){
+        var t0=i/seg*Math.PI*2, t1=(i+1)/seg*Math.PI*2;
+        for(var j=0;j<prof.length-1;j++){
+          var r0=prof[j][0],y0=prof[j][1],r1=prof[j+1][0],y1=prof[j+1][1];
+          quad([Math.cos(t0)*r0,y0,Math.sin(t0)*r0],[Math.cos(t1)*r0,y0,Math.sin(t1)*r0],
+               [Math.cos(t1)*r1,y1,Math.sin(t1)*r1],[Math.cos(t0)*r1,y1,Math.sin(t0)*r1],
+               typeof col==="function"?col(j,t0):col);
+        }
+      }
+    }
+    function ball(cx,cy,cz,rx,ry,rz,nu,nv,col){
+      for(var i=0;i<nu;i++)for(var j=0;j<nv;j++){
+        var u0=i/nu*Math.PI*2,u1=(i+1)/nu*Math.PI*2, v0=j/nv*Math.PI,v1=(j+1)/nv*Math.PI;
+        function p(u,v){ return [cx+Math.sin(v)*Math.cos(u)*rx, cy+Math.cos(v)*ry, cz+Math.sin(v)*Math.sin(u)*rz]; }
+        var a=p(u0,v0),b=p(u1,v0),c=p(u1,v1),d=p(u0,v1);
+        quad(a,b,c,d, typeof col==="function"?col((a[0]+c[0])/2,(a[1]+c[1])/2,(a[2]+c[2])/2):col);
+      }
+    }
+    function torus(cy,R,r,nu,nv,tilt,col){
+      for(var i=0;i<nu;i++)for(var j=0;j<nv;j++){
+        var u0=i/nu*Math.PI*2,u1=(i+1)/nu*Math.PI*2, v0=j/nv*Math.PI*2,v1=(j+1)/nv*Math.PI*2;
+        function p(u,v){
+          var x=(R+r*Math.cos(v))*Math.cos(u), z=(R+r*Math.cos(v))*Math.sin(u), y=r*Math.sin(v);
+          var y2=y*Math.cos(tilt)-z*Math.sin(tilt), z2=y*Math.sin(tilt)+z*Math.cos(tilt);
+          return [x, cy+y2, z2];
+        }
+        quad(p(u0,v0),p(u1,v0),p(u1,v1),p(u0,v1),col);
+      }
+    }
+
+    var SOT="#22262E", SOT2="#2C313B", PIEL="#F0CBA4", PIEL2="#E0B287",
+        PELO="#4A3222", PELO2="#5B3E2A", BLANCO="#FAFBFC", ORO="#D9A521",
+        MAD="#6B4229", MAD2="#7E4F31", BOTON="#141820";
+
+    var SOTPROF=[[0.82,-1.40],[0.76,-1.05],[0.62,-0.70],[0.48,-0.44],[0.38,-0.28],[0.34,-0.22]];
+    function rAt(y){
+      for(var i=0;i<SOTPROF.length-1;i++){
+        var a=SOTPROF[i], b=SOTPROF[i+1];
+        if(y>=a[1] && y<=b[1]) return a[0]+(b[0]-a[0])*((y-a[1])/(b[1]-a[1]));
+      }
+      return y<SOTPROF[0][1] ? SOTPROF[0][0] : SOTPROF[SOTPROF.length-1][0];
+    }
+
+    lathe([[0.92,-1.62],[0.92,-1.50],[0.82,-1.48],[0.82,-1.40]],24,
+      function(j){ return j===1?MAD:MAD2; });                       // base
+    lathe(SOTPROF,24,function(j,t){ return Math.cos(t)>0?SOT2:SOT; }); // sotana
+    ball(-0.54,-0.56,0.10,0.19,0.30,0.20,10,8,SOT2);                 // mangas
+    ball( 0.54,-0.56,0.10,0.19,0.30,0.20,10,8,SOT2);
+    ball(-0.09,-0.60,rAt(-0.60)+0.05,0.16,0.115,0.14,10,8,PIEL);     // manos
+    ball( 0.11,-0.62,rAt(-0.62)+0.03,0.15,0.105,0.13,10,8,PIEL2);
+    for(var k=0;k<8;k++){                                            // botonadura
+      var by=-1.08+k*0.118;
+      ball(0,by,rAt(by)+0.012,0.032,0.032,0.032,6,5,BOTON);
+    }
+    lathe([[0.36,-0.26],[0.31,-0.10]],24,BLANCO);                    // alzacuello
+    ball(0,-0.16,0.31,0.06,0.085,0.05,8,6,BLANCO);
+    lathe([[0.19,-0.16],[0.18,0.08]],16,PIEL2);                      // cuello
+    torus(1.16,0.66,0.058,26,8,0.42,ORO);                            // aureola
+    ball(0,0.56,0,0.62,0.56,0.58,22,16,function(x,y,z){              // cabeza
+      if(y<0.30 && z>0.30) return PIEL2;
+      return PIEL;
+    });
+    var curls=[[0,1.10,-0.06,0.30],[-0.30,1.05,0.10,0.26],[0.30,1.05,0.10,0.26],
+               [-0.52,0.86,0.02,0.25],[0.52,0.86,0.02,0.25],[-0.58,0.60,-0.10,0.24],
+               [0.58,0.60,-0.10,0.24],[-0.20,1.11,0.26,0.22],[0.20,1.11,0.26,0.22],
+               [0,0.98,-0.44,0.28],[-0.34,0.86,-0.44,0.26],[0.34,0.86,-0.44,0.26],
+               [-0.48,0.42,-0.34,0.24],[0.48,0.42,-0.34,0.24],[0,0.66,-0.56,0.26],
+               [-0.44,1.00,-0.24,0.24],[0.44,1.00,-0.24,0.24]];
+    curls.forEach(function(c,i){ ball(c[0],c[1],c[2],c[3],c[3]*0.92,c[3],9,7, i%2?PELO:PELO2); });
+    ball(-0.20,0.70,0.50,0.13,0.035,0.05,8,5,PELO);                  // cejas
+    ball( 0.20,0.70,0.50,0.13,0.035,0.05,8,5,PELO);
+    ball(-0.20,0.56,0.50,0.115,0.135,0.09,12,9,"#1C1C22");           // ojos
+    ball( 0.20,0.56,0.50,0.115,0.135,0.09,12,9,"#1C1C22");
+    ball(-0.235,0.615,0.575,0.040,0.045,0.035,8,6,"#FFFFFF");
+    ball( 0.165,0.615,0.575,0.040,0.045,0.035,8,6,"#FFFFFF");
+    ball(0,0.46,0.56,0.075,0.070,0.065,9,7,PIEL2);                   // nariz
+    ball(0,0.28,0.52,0.10,0.028,0.045,9,5,"#B4695A");                // boca
+    return F;
+  }
+
+  function shade(hex,f){
+    var n=parseInt(hex.slice(1),16), r=(n>>16)&255,g2=(n>>8)&255,b=n&255;
+    r=Math.max(0,Math.min(255,Math.round(r*f)));
+    g2=Math.max(0,Math.min(255,Math.round(g2*f)));
+    b=Math.max(0,Math.min(255,Math.round(b*f)));
+    return "rgb("+r+","+g2+","+b+")";
+  }
+
+  var bustRAF=null, bustDrag={on:false,x:0}, bustYaw=0, bustTargetYaw=0;
+  function mountBust(cv){
+    if(!MESH) MESH=buildBust();
+    var g=cv.getContext("2d"), t0=performance.now();
+    function draw(now){
+      var d=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+      if(!W||!H){ bustRAF=requestAnimationFrame(draw); return; }
+      cv.width=W*d; cv.height=H*d; g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,W,H);
+      var t=(now-t0)/1000;
+      if(!bustDrag.on) bustTargetYaw = REDUCED ? 0.34 : Math.sin(t*0.30)*0.55;
+      bustYaw += (bustTargetYaw-bustYaw)*0.12;
+      var pitch = REDUCED?0.05:Math.sin(t*0.22)*0.06;
+      var cy=Math.cos(bustYaw), sy=Math.sin(bustYaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
+      var S=(H-14)/2.98, ox=W/2, oy=7+1.34*S, LIGHT=[-0.42,0.66,0.62];
+      var out=[];
+      for(var i=0;i<MESH.length;i++){
+        var f=MESH[i], pts=[], zsum=0;
+        for(var j=0;j<f.v.length;j++){
+          var p=f.v[j], x=p[0],y=p[1],z=p[2];
+          var x1=x*cy - z*sy, z1=x*sy + z*cy;
+          var y1=y*cp - z1*sp, z2=y*sp + z1*cp;
+          zsum+=z2; pts.push([ox+x1*S, oy-y1*S, z2]);
+        }
+        // normal por producto cruz (iluminación a dos caras; el orden por
+        // profundidad se encarga de ocultar lo que queda detrás)
+        var v0=f.v[0],v1=f.v[1],v2=f.v[2];
+        var ux=v1[0]-v0[0],uy=v1[1]-v0[1],uz=v1[2]-v0[2];
+        var wx=v2[0]-v0[0],wy=v2[1]-v0[1],wz=v2[2]-v0[2];
+        var nx=uy*wz-uz*wy, ny=uz*wx-ux*wz, nz=ux*wy-uy*wx;
+        var nx1=nx*cy-nz*sy, nz1=nx*sy+nz*cy, ny1=ny*cp-nz1*sp, nz2=ny*sp+nz1*cp;
+        var nl=Math.hypot(nx1,ny1,nz2)||1;
+        var lam=Math.abs((nx1/nl)*LIGHT[0]+(ny1/nl)*LIGHT[1]+(nz2/nl)*LIGHT[2]);
+        out.push({z:zsum/f.v.length, p:pts, c:shade(f.c, 0.62+0.46*lam)});
+      }
+      out.sort(function(a,b){return a.z-b.z;});
+      for(i=0;i<out.length;i++){
+        var o=out[i]; g.beginPath(); g.moveTo(o.p[0][0],o.p[0][1]);
+        for(j=1;j<o.p.length;j++) g.lineTo(o.p[j][0],o.p[j][1]);
+        g.closePath(); g.fillStyle=o.c; g.fill();
+        g.strokeStyle=o.c; g.lineWidth=.6; g.stroke();
+      }
+      bustRAF=requestAnimationFrame(draw);
+    }
+    if(bustRAF) cancelAnimationFrame(bustRAF);
+    draw(performance.now());
+
+    cv.addEventListener("pointerdown",function(e){ bustDrag.on=true; bustDrag.x=e.clientX;
+      cv.setPointerCapture(e.pointerId); cv.style.cursor="grabbing"; });
+    cv.addEventListener("pointermove",function(e){
+      if(!bustDrag.on) return;
+      bustTargetYaw += (e.clientX-bustDrag.x)*0.012; bustDrag.x=e.clientX;
+      bustTargetYaw=Math.max(-1.1,Math.min(1.1,bustTargetYaw));
+    });
+    function stop(){ bustDrag.on=false; cv.style.cursor="grab"; }
+    cv.addEventListener("pointerup",stop); cv.addEventListener("pointercancel",stop);
+  }
+
+  /* ============ Mensajes de la guía, según lo ya decidido ============ */
+  function tipFor(kind){
+    var p0=S.picks[0], p1=S.picks[1], p2=S.picks[2], k;
+
+    if(kind==="intro")
+      return "Vas a tomar cuatro decisiones seguidas. Ninguna es correcta ni incorrecta: lo que elijas cambia lo que enfrentas después. Arrastra la figura para girarla.";
+
+    if(kind==="sit0")
+      return "Antes de resolver, fíjate en qué está en juego para cada persona nombrada, no solo en el plazo.";
+
+    if(kind==="sit1"){
+      k=p0?p0.idx:null;
+      if(k===0) return "Cerraste tú la planificación y el equipo la ejecutó sin discutir. Camila dejó de venir en ese mismo periodo. Puede no tener relación. Puede tenerla.";
+      if(k===1) return "La vez pasada abriste el diálogo y el equipo salió más unido. Aun así Camila dejó de venir: escuchar al grupo no es lo mismo que ver a cada uno.";
+      if(k===2) return "La vez pasada resolviste con una votación, y Camila estuvo en la minoría de esa votación.";
+      return "Camila lleva tres semanas fuera y nadie le ha preguntado por qué.";
+    }
+
+    if(kind==="sit2"){
+      k=p1?p1.idx:null;
+      if(k===0) return "Camila no volvió. La actividad salió bien igual. Esas dos cosas conviven, y esa convivencia es el escenario de hoy.";
+      if(k===1) return "Camila volvió al equipo y la actividad salió bien. Y aun así alguien preguntó para qué la hicimos.";
+      if(k===2) return "El equipo decidió sobre Camila sin Camila. Hoy va a decidir otra vez: mira cómo decide, no solo qué decide.";
+      return "Aquí no hay conflicto ni urgencia. Esa es exactamente la dificultad del escenario.";
+    }
+
+    if(kind==="sit3"){
+      if(ST.confianza>=2) return "Llegas con confianza acumulada en el equipo. Eso te da margen para decidir sin perder a nadie — o para creer que puedes decidir cualquier cosa.";
+      if(ST.confianza<=-1) return "Vienes con distancia acumulada. Lo que decidas sobre Tomás se va a leer sobre ese fondo, no en el vacío.";
+      return "Un error ya ocurrió y hay alguien esperando tu respuesta. Fíjate en quién es «el equipo» cuando pide consecuencias.";
+    }
+
+    if(kind==="decision"){
+      if(S.sc===0) return "Ninguna de las tres es la esperada. Elige la que realmente harías, no la que suena mejor.";
+      if(S.sc===1) return "Las tres alternativas resuelven la convocatoria. Ninguna resuelve por qué Camila se fue.";
+      if(S.sc===2) return "Las tres permiten seguir funcionando. Solo una obliga al equipo a decir para qué.";
+      return "Las tres son defendibles ante el equipo. Piensa cuál es defendible ante Tomás.";
+    }
+
+    if(kind==="fundamento")
+      return "Escribe tu criterio antes de ver qué pasó. Nadie lo va a corregir: se te devolverá al final, tal como lo escribiste.";
+
+    if(kind==="consecuencia"){
+      var o=SC[S.sc].opts[S.picks[S.sc].idx], f=[];
+      if(o.s.confianza>=2) f.push("el equipo quedó más unido");
+      else if(o.s.confianza<=-2) f.push("perdiste confianza con parte del equipo");
+      else if(o.s.confianza<=-1) f.push("quedó una tensión sin nombrar");
+      if(o.s.sentido>=2) f.push("el propósito quedó dicho en voz alta");
+      else if(o.s.sentido<=-2) f.push("el para qué quedó otra vez sin responder");
+      else if(o.s.sentido<=-1) f.push("el sentido quedó pendiente");
+      if(o.s.tiempo<=-2) f.push("te quedaste sin margen de tiempo");
+      else if(o.s.tiempo>=2) f.push("ganaste margen de tiempo");
+      var base = f.length ? "Con esta decisión "+f.join(", y ")+"." : "El equipo sigue igual que antes de tu decisión.";
+      return S.sc<3 ? base+" Con eso llegas al escenario siguiente."
+                    : base+" Con eso termina el recorrido.";
+    }
+    return null;
+  }
+
+  function guideCard(key,tipKey){
+    var d=key?DB[key]:null, tip=tipKey?tipFor(tipKey):null;
+    if(!d && !tip) return "";
+    return '<div class="guide"><div class="guide-fig"><canvas class="bust" aria-label="Figura estilizada de Don Bosco, guía de la experiencia"></canvas></div>' +
+      '<div class="guide-body"><p class="guide-name">Guía · Don Bosco</p>' +
+      (d?'<p class="guide-q">«'+esc(d.q)+'»<span class="guide-cite">'+esc(d.s)+"</span></p>":"") +
+      (tip?'<p class="guide-tip">'+esc(tip)+"</p>":"") +
+      "</div></div>";
+  }
+
+  /* ============ Navegación ============ */
+  function go(phase,sc){
+    HIST.push(snap());
+    S.phase=phase; if(sc!==undefined) S.sc=sc;
+    paint();
+  }
+  function back(){
+    if(!HIST.length) return;
+    restore(HIST.pop());
+    paint();
+  }
+  function paint(){
+    paintRail(); paintTop(); render();
+    app.focus({preventScroll:true});
+    window.scrollTo({top:0,behavior:REDUCED?"auto":"smooth"});
+  }
+  backBtn.addEventListener("click",back);
+
+  /* ============ Render ============ */
+  function render(){
+    var e=SC[S.sc], html="";
+
+    if(S.phase==="intro"){
+      html =
+      '<div class="hero-wrap"><canvas class="hero-canvas" id="hero"></canvas>' +
+      '<div class="hero-txt"><p><b>Universidad Católica Silva Henríquez</b><br>Introducción a la espiritualidad salesiana</p></div></div>' +
+      '<p class="eyebrow">Experiencia formativa · Sistema Preventivo</p>' +
+      "<h1>El sistema preventivo</h1>" +
+      '<div class="narr" style="font-size:1.08rem;margin-bottom:1.8rem">' +
+      "<p>Ya revisamos el Sistema Preventivo y la espiritualidad salesiana. Ahora los vamos a poner en práctica.</p>" +
+      "<p>Durante el módulo trabajamos los tres pilares —razón, religión-trascendencia y amor— como criterios de un modo de educar y de acompañar. Aquí dejan de ser contenido y se vuelven decisiones: vas a acompañar a un equipo universitario a lo largo de un semestre, y en cuatro momentos vas a tener que resolver con poco tiempo, con opiniones enfrentadas y con personas de por medio.</p>" +
+      "<p>No hay respuestas correctas. Al final vas a ver con qué pilar resolviste y cuál casi no usaste.</p></div>" +
+      guideCard("marco","intro") +
+
+      "<h3>Los tres pilares</h3>" +
+      '<ul class="plain">' +
+      '<li><span><span class="pillar" style="color:'+P.razon.ink+'">Razón:</span> mirar la realidad, los tiempos, los recursos y las consecuencias antes de resolver.</span></li>' +
+      '<li><span><span class="pillar" style="color:'+P.trasc.ink+'">Religión-Trascendencia:</span> volver a la pregunta por el sentido y el propósito que da origen a lo que hacemos.</span></li>' +
+      '<li><span><span class="pillar" style="color:'+P.amor.ink+'">Amor:</span> cuidar a las personas y los vínculos, también cuando la decisión no les guste.</span></li>' +
+      "</ul>" +
+
+      "<h3>Cómo funciona</h3>" +
+      '<ul class="plain" style="--rule:var(--brand)">' +
+      "<li><span>Enfrentas cuatro situaciones, una después de otra. <b>Lo que decidas en la primera cambia la que enfrentas en la tercera.</b></span></li>" +
+      "<li><span>Ninguna alternativa es correcta ni incorrecta, y no se acumulan puntos. Cada camino te muestra qué pasó y qué quedó pendiente.</span></li>" +
+      "<li><span>En dos momentos tendrás que escribir con qué criterio decidiste, antes de ver la consecuencia.</span></li>" +
+      "<li><span>Al final recibes tu reparto entre los tres pilares, tres prácticas concretas para tu propio equipo y una imagen de síntesis que puedes descargar como evidencia.</span></li>" +
+      "<li><span>Toma unos quince minutos y puedes volver atrás en cualquier momento con el botón de arriba a la izquierda.</span></li>" +
+      "</ul>" +
+
+      '<h3 style="margin-top:2.4rem">Antes de empezar</h3>' +
+      '<div class="field"><label for="f-name">¿Cómo te llamas?</label>' +
+      '<input type="text" id="f-name" maxlength="40" placeholder="Tu nombre" value="'+esc(S.name)+'">' +
+      '<span class="hint">La historia se contará sobre ti.</span></div>' +
+      '<div class="field"><label for="f-com">¿Qué equipo o comunidad acompañas en la vida real?</label>' +
+      '<input type="text" id="f-com" maxlength="90" placeholder="Opcional — por ejemplo: mi centro de alumnos, mi grupo pastoral" value="'+esc(S.community)+'">' +
+      '<span class="hint">Se usará al final, en las prácticas que te propongas.</span></div>' +
+      '<div class="actions"><button class="btn" id="start">Comenzar la experiencia</button></div>';
+    }
+
+    else if(S.phase==="situacion"){
+      html = '<canvas class="scene" data-v="'+e.scene+'" aria-hidden="true"></canvas>' +
+        '<p class="eyebrow">'+esc(e.tag)+"</p><h2>"+esc(e.title)+"</h2>" +
+        (S.sc===0?"":'<div class="state"><b>Dónde está el equipo</b>'+
+          stateLines().map(function(t){return "<div>"+esc(t)+"</div>";}).join("")+"</div>") +
+        guideCard(null,"sit"+S.sc) +
+        '<div class="narr">'+e.story.map(function(t){return "<p>"+fill(esc(t))+"</p>";}).join("")+"</div>" +
+        '<div class="actions"><button class="btn" id="next">Continuar</button></div>';
+    }
+
+    else if(S.phase==="decision"){
+      html = '<p class="eyebrow">'+esc(e.tag)+"</p><h2>"+esc(e.ask)+"</h2>" +
+        '<p class="voice">'+esc(e.voice)+"</p>" + guideCard(null,"decision") +
+        '<fieldset class="choices"><legend class="sr">Elige una alternativa</legend>' +
+        e.opts.map(function(o,i){return '<button class="choice" data-i="'+i+'">'+
+          '<span class="mark" aria-hidden="true">'+o.k+"</span><span>"+esc(o.label)+"</span></button>";}).join("") +
+        "</fieldset>";
+    }
+
+    else if(S.phase==="fundamento"){
+      html = '<p class="eyebrow">'+esc(e.tag)+"</p><h2>Antes de saber qué pasó</h2>" +
+        guideCard(null,"fundamento") +
+        '<div class="field"><label for="f-crit" style="font-family:var(--serif);font-size:1.1rem;font-weight:500">'+esc(e.fundar)+"</label>" +
+        '<textarea id="f-crit" placeholder="Escribe con tus palabras…">'+esc(S.fund[e.id]||"")+"</textarea>" +
+        '<span class="counter" id="cnt"></span></div>' +
+        (function(){
+          var q=FUNDQ[e.id] && FUNDQ[e.id][S.picks[S.sc].idx];
+          if(!q) return "";
+          return '<div class="panel"><h3>Tres preguntas sobre la alternativa '+e.opts[S.picks[S.sc].idx].k+'</h3><ul class="plain">' +
+            '<li><span><span class="pillar" style="color:'+P.razon.ink+'">Razón:</span> '+esc(q.razon)+"</span></li>" +
+            '<li><span><span class="pillar" style="color:'+P.trasc.ink+'">Religión-Trascendencia:</span> '+esc(q.trasc)+"</span></li>" +
+            '<li><span><span class="pillar" style="color:'+P.amor.ink+'">Amor:</span> '+esc(q.amor)+"</span></li>" +
+            "</ul></div>";
+        })() +
+        '<div class="actions"><button class="btn" id="next" disabled>Ver qué pasó</button></div>';
+    }
+
+    else if(S.phase==="consecuencia"){
+      var pick=S.picks[S.sc], o=e.opts[pick.idx];
+      html = '<p class="tag" style="--tone:'+P[pick.dom].ink+'">'+esc(e.tag)+" · elegiste "+o.k+"</p>" +
+        "<h2>Lo que ocurrió después</h2>" +
+        '<div class="narr">'+o.cons.map(function(t){return "<p>"+fill(esc(t))+"</p>";}).join("")+"</div>" +
+        '<div style="margin-top:1.7rem"></div>' + guideCard(e.db,"consecuencia") +
+        '<div class="actions"><button class="btn" id="next">'+(S.sc===3?"Ver mi recorrido":"Continuar")+"</button></div>";
+    }
+
+    else if(S.phase==="perfil"){
+      var pr=profile();
+      var bars=KEYS.map(function(k){
+        return '<div class="bar-row" style="--tone:'+P[k].ink+'"><span class="bar-name">'+esc(P[k].name)+
+          '</span><span class="bar-pct">'+pr.pct[k]+'%</span><div class="bar-track">'+
+          '<div class="bar-fill" data-w="'+pr.pct[k]+'" style="--tone:'+P[k].tone+'"></div></div></div>';
+      }).join("");
+      var funds=Object.keys(S.fund).map(function(id){
+        var sc=SC.filter(function(x){return x.id===id;})[0];
+        return '<div style="margin-bottom:1.1rem"><p class="quiet" style="margin:0 0 .2rem">'+esc(sc.tag)+
+               '</p><p class="echo" style="margin:0">'+esc(S.fund[id])+"</p></div>";
+      }).join("");
+      var com=S.community?esc(S.community):"tu comunidad";
+
+      html = '<p class="eyebrow">Tu recorrido</p><h2>Cómo repartiste el peso de tus decisiones</h2>' +
+        '<p class="quiet" style="margin-bottom:1.7rem">Ninguna de las doce alternativas era de un solo pilar: todas pesaban en los tres, en proporciones distintas. Esto es la suma de esas proporciones en las cuatro decisiones que tomaste.</p>' +
+        '<div class="bars">'+bars+"</div>" +
+        '<div class="legend">'+KEYS.map(function(k){
+          return '<span style="--tone:'+P[k].tone+'"><i></i>'+esc(P[k].name)+"</span>";}).join("")+"</div>" +
+        '<p class="quiet" style="margin-top:.9rem">La línea de la izquierda quedó pintada con estos mismos colores: cada tramo lleva el del pilar que más pesó en lo que elegiste. Ese trazo es tu recorrido.</p>' +
+        '<p class="quiet" style="margin-top:1.3rem">'+SHAPE_TEXT[pr.shape]+"</p>" +
+        "<h3>El pilar que llevaste por delante</h3>" +
+        '<div class="panel"><p class="tag" style="--tone:'+P[pr.top].ink+';margin:0 0 .5rem">'+esc(P[pr.top].name)+" · "+pr.pct[pr.top]+'%</p><p style="margin:0">'+esc(DOMINANT_NOTE[pr.top])+"</p></div>" +
+        "<h3>El que menos apareció</h3>" +
+        '<div class="panel"><p class="tag" style="--tone:'+P[pr.low].ink+';margin:0 0 .5rem">'+esc(P[pr.low].name)+" · "+pr.pct[pr.low]+'%</p><p style="margin:0">'+esc(BLIND_NOTE[pr.low])+"</p></div>" +
+        "<h3>Qué hacer con esto en "+com+"</h3>" +
+        '<p class="quiet" style="margin-bottom:1rem">Tres prácticas concretas para fortalecer '+esc(P[pr.low].name)+" en tu rol, no en abstracto.</p>" +
+        '<ol class="practices" style="--tone:'+P[pr.low].tone+'">'+PRACTICE[pr.low].map(function(t){return "<li>"+esc(t)+"</li>";}).join("")+"</ol>" +
+        (funds?'<h3>Los criterios que declaraste</h3><div class="panel">'+funds+"</div>":"") +
+        guideCard("cierre",null) +
+        "<h3>Tu evidencia para subir a la plataforma</h3>" +
+        '<div class="synth"><img id="synth-img" alt="Síntesis de tu recorrido: reparto entre razón, religión-trascendencia y amor.">' +
+        '<p class="synth-help" id="synth-help">Generando la imagen…</p></div>' +
+        '<div class="actions"><button class="btn" id="dl">Guardar imagen</button>' +
+        '<button class="btn ghost" id="copyimg">Copiar la imagen</button>' +
+        '<button class="btn ghost" id="again">Volver a jugarlo</button>' +
+        '<span class="toast" id="toast" role="status"></span></div>';
+    }
+
+    app.innerHTML='<div class="screen">'+html+"</div>";
+    wire();
+  }
+
+  /* ============ Imagen de síntesis ============ */
+  var SY={razon:"#00679E",trasc:"#E3A900",amor:"#D9633D"};
+  var SY_INK={razon:"#004575",trasc:"#8A6600",amor:"#A84424"};
+  var synthBlob=null;
+
+  function buildSynth(pr, cb){
+    var W=1200,H=1000, cv=document.createElement("canvas");
+    cv.width=W; cv.height=H;
+    var g=cv.getContext("2d");
+    g.fillStyle="#FFFFFF"; g.fillRect(0,0,W,H);
+
+    // cabecera con tejido UCSH
+    g.fillStyle="#00263F"; g.fillRect(0,0,W,168);
+    g.globalAlpha=.5;
+    for(var i=0;i<5;i++){ g.fillStyle="#0A5F92"; g.fillRect(0,20+i*32,W,14); }
+    g.globalAlpha=.3;
+    for(i=0;i<26;i++){ g.fillStyle="#FCBC00"; g.fillRect(40+i*46,0,16,168); }
+    g.globalAlpha=1;
+    var hg=g.createLinearGradient(0,0,W*0.75,0);
+    hg.addColorStop(0,"rgba(0,25,42,.92)"); hg.addColorStop(1,"rgba(0,25,42,0)");
+    g.fillStyle=hg; g.fillRect(0,0,W,168);
+    g.fillStyle="#FFFFFF";
+    g.font='700 30px Archivo, Arial, sans-serif';
+    g.fillText("Universidad Católica Silva Henríquez", 56, 74);
+    g.fillStyle="#FCBC00";
+    g.font='600 22px Archivo, Arial, sans-serif';
+    g.fillText("Introducción a la espiritualidad salesiana", 56, 112);
+    g.fillStyle="#BFD8E8";
+    g.font='500 18px Archivo, Arial, sans-serif';
+    g.fillText("El sistema preventivo · síntesis del recorrido", 56, 144);
+
+    // identificación
+    var y=232;
+    g.fillStyle="#0A2233"; g.font='800 44px Archivo, Arial, sans-serif';
+    g.fillText(S.name||"Sebastián", 56, y);
+    g.fillStyle="#4F6B80"; g.font='400 20px Archivo, Arial, sans-serif';
+    var sub=(S.community?S.community+"  ·  ":"")+new Date().toLocaleDateString("es-CL",{day:"numeric",month:"long",year:"numeric"});
+    g.fillText(sub, 56, y+34);
+
+    // barras
+    y=340;
+    g.fillStyle="#4F6B80"; g.font='700 15px Archivo, Arial, sans-serif';
+    g.fillText("REPARTO DEL PESO DECISIONAL EN LAS CUATRO DECISIONES", 56, y);
+    y+=42;
+    KEYS.forEach(function(k){
+      g.fillStyle=SY_INK[k]; g.font='700 24px Archivo, Arial, sans-serif';
+      g.fillText(P[k].name, 56, y+22);
+      g.textAlign="right"; g.font='800 30px Archivo, Arial, sans-serif';
+      g.fillText(pr.pct[k]+"%", W-56, y+24); g.textAlign="left";
+      g.fillStyle="#E4EDF4"; g.fillRect(56, y+40, W-112, 20);
+      g.fillStyle=SY[k];    g.fillRect(56, y+40, (W-112)*pr.pct[k]/100, 20);
+      y+=96;
+    });
+
+    // lectura
+    y+=6;
+    g.fillStyle="#0A2233"; g.font='700 19px Archivo, Arial, sans-serif';
+    g.fillText("Llevó por delante: "+P[pr.top].name+"   ·   Menos apareció: "+P[pr.low].name, 56, y);
+    g.fillStyle="#4F6B80"; g.font='400 18px Archivo, Arial, sans-serif';
+    g.fillText("Forma del reparto: "+pr.shape, 56, y+30);
+
+    // recorrido
+    y+=76;
+    g.fillStyle="#4F6B80"; g.font='700 15px Archivo, Arial, sans-serif';
+    g.fillText("RECORRIDO", 56, y); y+=30;
+    SC.forEach(function(e,i){
+      var p=S.picks[i]; if(!p) return;
+      g.fillStyle=SY[p.dom]; g.fillRect(56, y-11, 10, 14);
+      g.fillStyle="#0A2233"; g.font='500 18px Archivo, Arial, sans-serif';
+      var name=e.tag.replace(/^Escenario \d+ · /,"");
+      g.fillText((i+1)+". "+name+" — alternativa "+e.opts[p.idx].k, 80, y);
+      y+=30;
+    });
+
+    // pie
+    g.fillStyle="#E4EDF4"; g.fillRect(56, H-104, W-112, 1);
+    g.fillStyle="#6B8093"; g.font='400 15px Archivo, Arial, sans-serif';
+    g.fillText("Describe decisiones tomadas en una experiencia formativa ficticia. No mide desarrollo personal", 56, H-70);
+    g.fillText("ni constituye un diagnóstico.", 56, H-46);
+    g.fillStyle="#FCBC00"; g.fillRect(W-120, H-92, 64, 8);
+    g.fillStyle="#00457C"; g.fillRect(W-120, H-76, 64, 8);
+
+    cv.toBlob(function(blob){ synthBlob=blob; cb(cv.toDataURL("image/png")); }, "image/png");
+  }
+
+  /* ============ Eventos ============ */
+  function wire(){
+    var b, hero=document.getElementById("hero");
+    if(hero) star3d(hero);
+    var bust=document.querySelector("canvas.bust");
+    if(bust) mountBust(bust);
+    animateScenes();
+
+    if((b=document.getElementById("start"))){
+      b.addEventListener("click",function(){
+        S.name=document.getElementById("f-name").value.trim();
+        S.community=document.getElementById("f-com").value.trim();
+        go("situacion",0);
+      });
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".choice"),function(btn){
+      btn.addEventListener("click",function(){
+        var e=SC[S.sc], i=Number(btn.getAttribute("data-i")), o=e.opts[i];
+        HIST.push(snap());
+        S.picks[S.sc]={idx:i,w:o.w,dom:dominantOf(o)};
+        ST.confianza+=o.s.confianza; ST.sentido+=o.s.sentido; ST.tiempo+=o.s.tiempo;
+        S.phase = e.fundar?"fundamento":"consecuencia";
+        paint();
+      });
+    });
+    var crit=document.getElementById("f-crit");
+    if(crit){
+      var nb=document.getElementById("next"), cnt=document.getElementById("cnt");
+      var sync=function(){
+        var v=crit.value.trim(); S.fund[SC[S.sc].id]=crit.value;
+        cnt.textContent=v.length+(v.length===1?" caracter":" caracteres");
+        nb.disabled=v.length<15;
+      };
+      crit.addEventListener("input",sync); sync();
+      nb.addEventListener("click",function(){ if(!nb.disabled) go("consecuencia"); });
+    }
+    else if((b=document.getElementById("next"))){
+      b.addEventListener("click",function(){
+        if(S.phase==="situacion") go("decision");
+        else if(S.phase==="consecuencia"){ if(S.sc<3) go("situacion",S.sc+1); else go("perfil"); }
+      });
+    }
+    var fills=document.querySelectorAll(".bar-fill");
+    if(fills.length) requestAnimationFrame(function(){
+      Array.prototype.forEach.call(fills,function(f){f.style.width=f.getAttribute("data-w")+"%";});
+    });
+
+    var img=document.getElementById("synth-img");
+    if(img){
+      var help=document.getElementById("synth-help");
+      var ready=(document.fonts&&document.fonts.ready)?document.fonts.ready:Promise.resolve();
+      ready.then(function(){
+        buildSynth(profile(), function(url){
+          img.src=url;
+          help.textContent="Haz clic en «Guardar imagen».";
+        });
+      });
+      var dl=document.getElementById("dl");
+      if(dl) dl.addEventListener("click",function(){ saveSynth(dl); });
+      var ci=document.getElementById("copyimg");
+      if(ci) ci.addEventListener("click",copySynthImage);
+    }
+
+    if((b=document.getElementById("copy"))){
+      b.addEventListener("click",function(){
+        var pr=profile(), L=["EL SISTEMA PREVENTIVO","Universidad Católica Silva Henríquez · Introducción a la espiritualidad salesiana","",
+          "Nombre: "+(S.name||"Sebastián"), S.community?"Comunidad: "+S.community:null,"","RECORRIDO"];
+        SC.forEach(function(e,i){ var p=S.picks[i]; if(!p) return;
+          L.push((i+1)+". "+e.tag.replace(/^Escenario \d+ · /,"")+" → "+e.opts[p.idx].k+": "+e.opts[p.idx].label); });
+        L.push("","REPARTO DEL PESO DECISIONAL");
+        KEYS.forEach(function(k){ L.push("  "+P[k].name+": "+pr.pct[k]+"%"); });
+        L.push("  Forma del reparto: "+pr.shape,"",
+               "Pilar que llevé por delante: "+P[pr.top].name,
+               "Pilar que menos apareció: "+P[pr.low].name,"",
+               "TRES PRÁCTICAS PARA "+(S.community?S.community.toUpperCase():"MI COMUNIDAD"));
+        PRACTICE[pr.low].forEach(function(t,i){ L.push("  "+(i+1)+". "+t); });
+        var fk=Object.keys(S.fund);
+        if(fk.length){ L.push("","CRITERIOS QUE DECLARÉ");
+          fk.forEach(function(id){ var sc=SC.filter(function(x){return x.id===id;})[0];
+            L.push("  · "+sc.tag+": "+S.fund[id].trim()); }); }
+        L.push("","Este resumen describe decisiones en una experiencia ficticia. No mide desarrollo personal.");
+        copy(L.filter(function(x){return x!==null;}).join("\n"));
+      });
+    }
+    if((b=document.getElementById("again"))){
+      b.addEventListener("click",function(){ reset(true); paint(); });
+    }
+  }
+
+  function fileName(){
+    var n=(S.name||"Sebastián").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-");
+    return "sintesis-sistema-preventivo-"+n.toLowerCase()+".png";
+  }
+  function saveSynth(btn){
+    if(!synthBlob){ say("La imagen todavía se está generando. Inténtalo en un segundo."); return; }
+    btn.disabled=true;
+    var done=function(){ btn.disabled=false; };
+    if(window.claude && typeof window.claude.use==="function"){
+      window.claude.use("downloads").then(function(d){
+        if(!d){ done(); fallbackSave(); return; }
+        d.save({filename:fileName(), data:synthBlob}).then(function(){
+          say("Imagen guardada."); done();
+        },function(err){
+          done();
+          if(err && err.code==="declined") say("Descarga cancelada.");
+          else fallbackSave();
+        });
+      },function(){ done(); fallbackSave(); });
+    } else { done(); fallbackSave(); }
+  }
+  function fallbackSave(){
+    say("Tu navegador no permite la descarga directa aquí: haz clic derecho sobre la imagen y elige «Guardar imagen como…».");
+  }
+  function copySynthImage(){
+    if(!synthBlob){ say("La imagen todavía se está generando."); return; }
+    if(window.ClipboardItem && navigator.clipboard && navigator.clipboard.write){
+      navigator.clipboard.write([new window.ClipboardItem({"image/png":synthBlob})]).then(function(){
+        say("Imagen copiada. Pégala directamente en la plataforma.");
+      },function(){
+        say("No se pudo copiar automáticamente: haz clic derecho sobre la imagen y elige «Copiar imagen».");
+      });
+    } else {
+      say("Tu navegador no permite copiar imágenes desde aquí: haz clic derecho sobre la imagen y elige «Copiar imagen».");
+    }
+  }
+  function say(msg){
+    var toast=document.getElementById("toast"); if(!toast) return;
+    toast.textContent=msg; toast.classList.add("show");
+    clearTimeout(say._t); say._t=setTimeout(function(){toast.classList.remove("show");},5200);
+  }
+
+  function copy(txt){
+    var toast=document.getElementById("toast");
+    var done=function(ok){
+      toast.textContent=ok?"Copiado al portapapeles.":"No se pudo copiar. Selecciona el texto manualmente.";
+      toast.classList.add("show"); setTimeout(function(){toast.classList.remove("show");},2800);
+    };
+    if(navigator.clipboard&&navigator.clipboard.writeText)
+      navigator.clipboard.writeText(txt).then(function(){done(true);},function(){legacy(txt,done);});
+    else legacy(txt,done);
+  }
+  function legacy(txt,done){
+    try{ var ta=document.createElement("textarea"); ta.value=txt; ta.setAttribute("readonly","");
+      ta.style.cssText="position:fixed;top:-9999px;opacity:0";
+      document.body.appendChild(ta); ta.select();
+      var ok=document.execCommand("copy"); document.body.removeChild(ta); done(ok);
+    }catch(err){ done(false); }
+  }
+
+  window.addEventListener("resize",function(){ animateScenes(); });
+  buildRail(); paint();
+})();
+</script>
+</body></html>
