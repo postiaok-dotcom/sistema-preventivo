@@ -202,7 +202,12 @@
   textarea{resize:vertical;min-height:7rem;line-height:1.55}
   input[type="text"]:focus-visible,textarea:focus-visible{outline:none;border-color:var(--brand);
     box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 24%,transparent)}
-  .counter{font-size:var(--fs-xs);color:var(--muted);font-variant-numeric:tabular-nums}
+  .counter{font-size:var(--fs-xs);color:var(--muted);font-variant-numeric:tabular-nums;
+    display:block;margin-top:.4rem;line-height:1.45}
+  .counter b{font-weight:600}
+  .counter.wait{color:var(--brand)}
+  .counter.ok b{color:#0F7A4A}
+  .counter .ideal{color:var(--muted);opacity:.85}
 
   /* ---------- Botones ---------- */
   .btn{font-family:var(--sans);font-size:var(--fs-sm);font-weight:700;letter-spacing:.02em;
@@ -1208,10 +1213,23 @@
     var crit=document.getElementById("f-crit");
     if(crit){
       var nb=document.getElementById("next"), cnt=document.getElementById("cnt");
+      var MIN=5, IDEAL=15;
       var sync=function(){
         var v=crit.value.trim(); S.fund[SC[S.sc].id]=crit.value;
-        cnt.textContent=v.length+(v.length===1?" caracter":" caracteres");
-        nb.disabled=v.length<15;
+        var n=v.length, falta=MIN-n;
+        if(n<MIN){
+          cnt.className="counter wait";
+          cnt.innerHTML = "<b>M&iacute;nimo "+MIN+" caracteres para continuar</b> &middot; te "+
+            (falta===1?"falta 1":"faltan "+falta);
+        } else if(n<IDEAL){
+          cnt.className="counter ok";
+          cnt.innerHTML = "<b>"+n+" caracteres &middot; m&iacute;nimo cumplido</b> &middot; " +
+            '<span class="ideal">ideal: al menos '+IDEAL+"</span>";
+        } else {
+          cnt.className="counter ok";
+          cnt.innerHTML = "<b>"+n+" caracteres</b>";
+        }
+        nb.disabled = n<MIN;
       };
       crit.addEventListener("input",sync); sync();
       nb.addEventListener("click",function(){ if(!nb.disabled) go("consecuencia"); });
